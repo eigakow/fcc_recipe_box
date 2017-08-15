@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { loadState, saveState } from './localStorage'
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'; // ES6
-import AnimateHeight from 'react-animate-height';
+//import AnimateHeight from 'react-animate-height';
 
 var FontAwesome = require('react-fontawesome');
 
@@ -11,7 +12,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      active: "Pizza",
+      active: "",
       contents: {
         Pizza:["ind1", "ind2"],
         Pasta:["ind11","ind22", "ind33"],
@@ -21,9 +22,13 @@ class App extends Component {
       activeModal: "new",
       isConfirmOpen: false
     }
+    let local = loadState();
+    //console.log("Local:")
+    //console.log(local)
+    if (local !== undefined) {this.state.contents = local}
   }
   changeActive = (name) =>	{
-    console.log(name);
+    //console.log(name);
     this.setState({
 			active: name,
       activeModal: name
@@ -36,7 +41,12 @@ class App extends Component {
     delete items[oldname];
     //console.log(typeof(Object.values(ing)))
     //console.log(Object.values(ing))
+    if (name == undefined){name = "-"}
+    if (ing== undefined){ing = ["-"]}
+
+
     items[name] = typeof(ing) === "string" ? ing.split(",") : Object.values(ing)
+
 
     console.log("New content: ", items)
     // update state
@@ -44,6 +54,7 @@ class App extends Component {
         contents: items
     });
     this.closeModal();
+    saveState(this.state.contents);
   }
 
   removeRecipe = (name) => {
@@ -55,7 +66,7 @@ class App extends Component {
         contents: items
     });
     this.closeConfirm();
-
+    saveState(this.state.contents);
   }
 
   openModal = (type = "new") => {
@@ -73,10 +84,14 @@ class App extends Component {
   }
 
   showModal() {
-    return this.state.isModalOpen ? <div><div className="backdrop"/><ModifyRecipe type= {this.state.activeModal} close= {this.closeModal} modify={this.updateValues} ing={this.state.contents[this.state.activeModal]}/></div> : null;
+    console.log("Printing modal with type: " + this.state.activeModal)
+    return this.state.isModalOpen ? <div key="1"><div className="backdrop"/><ModifyRecipe type= {this.state.activeModal} close= {this.closeModal} modify={this.updateValues} ing={this.state.contents[this.state.activeModal]}/></div> : null;
   }
   showConfirm() {
-    return this.state.isConfirmOpen ? <div><div className="backdrop"/><RemoveRecipe name= {this.state.activeModal} remove= {this.removeRecipe} close= {this.closeConfirm} /></div> : null;
+    return this.state.isConfirmOpen ? <div key="2"><div className="backdrop"/>
+      <ReactCSSTransitionGroup transitionName="items" transitionEnterTimeout={1000} transitionLeaveTimeout={600}>
+        <RemoveRecipe name= {this.state.activeModal} remove= {this.removeRecipe} close= {this.closeConfirm} />
+      </ReactCSSTransitionGroup> </div> : null;
   }
 
   render() {
@@ -88,13 +103,16 @@ class App extends Component {
       //console.log(this);
       return <Recipe name={x} key={idx} active={active === x} ing={ingList[x]} changeAct = {this.changeActive} modify = {this.openModal} remove = {this.openConfirm}/>
     }, this)
+
     return (
       <div>
-        {this.showModal()}
-        {this.showConfirm()}
+          {this.showModal()}
+          {this.showConfirm()}
         <div className="main">
-          {renderRecipes}
-        <FontAwesome className="plus" size='2x' name="plus-circle" onClick={this.openModal} />
+          <ReactCSSTransitionGroup transitionName="items" transitionEnterTimeout={1000} transitionLeaveTimeout={600}>
+            {renderRecipes}
+          </ReactCSSTransitionGroup>
+        <FontAwesome className="plus" size='2x' name="plus-circle" onClick={() => this.openModal("new")} />
       </div>
     </div>
     );
@@ -118,19 +136,15 @@ class Recipe extends Component {
     )
   }
   show = (name, ing = [], full) => {
-    const long = <AnimateHeight easing = {"easeInQuart"} duration={ 1000 } height={ "auto" }>
-          <RecipeIngredients ing={ing} name= {name} modify={this.props.modify} remove={this.props.remove}/></AnimateHeight>;
-    const short = <AnimateHeight easing = {"easeInQuart"} duration={ 1000 } height={ 0 }>
-          <RecipeIngredients ing={ing}  name= {name} modify={this.props.modify} remove={this.props.remove}/></AnimateHeight>;
+    const long = //<AnimateHeight easing = {"easeInQuart"} duration={ 1000 } height={ "auto" }>
+            <RecipeIngredients key="0" ing={ing} name= {name} modify={this.props.modify} remove={this.props.remove}/>
 
     return(
       <div>
         { full ? <div className="recipeBox active"> {name} </div> : <div className="recipeBox"> {name} </div> }
-  {/*}      { full && <AnimateHeight duration={ 5000 } height={ "auto" }> }
-        { !full && <AnimateHeight duration={ 5000 } height={ 0 }> }  {/*To slide up use 0, for slide down use 'auto'}
-          <RecipeIngredients ing={ing} />
-        </AnimateHeight> */}
-        { full ? long : short}
+  {/*      <ReactCSSTransitionGroup transitionName="ing" transitionEnterTimeout={2000} transitionLeave={false}> */}
+          { full ? long : null}
+  {/*       </ReactCSSTransitionGroup> */}
       </div>
     )
   }
@@ -172,8 +186,11 @@ class RecipeIngredients extends Component {
 class ModifyRecipe extends Component {
   constructor(props) {
     super(props);
+
+    let name = this.props.type === "new" ? "" : this.props.type
+
     this.state = {
-      name: this.props.type,
+      name: name,
       ing: this.props.ing
     }
   }
@@ -193,6 +210,8 @@ class ModifyRecipe extends Component {
     let title = this.props.type === "new" ? "Add a Recipe" : "Modify a Recipe "
     console.log("this.props.type: ")
     console.log(this.props.type)
+    console.log("this.props.type is of type")
+    console.log(typeof(this.props.type))
     return(
       <div className="modal">
         <form>

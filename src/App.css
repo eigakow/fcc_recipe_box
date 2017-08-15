@@ -77,13 +77,37 @@ body {
   left: 30px;
   bottom: 10px; }
 
-.anim-enter {
+.items-enter {
   opacity: 0.01; }
 
-.anim-enter.anim-enter-active {
-  opacity: 2;
-  transition: opacity 5s ease-in; }
+.items-enter.items-enter-active {
+  opacity: 1;
+  transition: opacity 1000ms ease-in; }
 
+.items-leave {
+  opacity: 1; }
+
+.items-leave.items-leave-active {
+  opacity: 0.01;
+  transition: opacity 600ms ease-in; }
+
+.ing-enter {
+  height: 0px; }
+
+.ing-enter.ing-enter-active {
+  transition: height 2s linear;
+  height: 100%; }
+
+/*
+.ing-leave {
+//  opacity: 1;
+  height: 100%;
+}
+.ing-leave.ing-leave-active {
+//  opacity: 0.01;
+  transition: height 10ms ease-in;
+  height: 0px;
+}*/
 .backdrop {
   position: absolute;
   top: 0px;
